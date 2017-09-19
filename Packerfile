@@ -1,0 +1,41 @@
+pipeline {
+  }
+
+  stages {
+    stage('Running Test Kitchen') {
+      agent {
+        docker {
+          image 'ruby'
+        }
+      }
+      steps {
+        sh "cd playbooks && bundle install --path=/usr/local/bundle >> /dev/null && kitchen test"
+      }
+    }
+    stage('Validate Packer config files') {
+      agent {
+        docker {
+          image 'hashicorp/packer:light'
+        }
+      }
+      steps {
+        sh "packer validate base.json"
+      }
+    }
+    stage('Build Base Image') {
+      agent {
+        docker {
+          image 'hashicorp/packer:light'
+        }
+      }
+      steps {
+        sh "packer build base.json"
+      }
+    }
+  }
+  post {
+    always {
+      deleteDir()
+    }
+  }
+}
